@@ -3,59 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>物理眼鏡模擬實驗室 - 黃孟緯 & 林宇晟</title>
+    <title>物理眼鏡虛擬實驗室 - 黃孟緯 & 林宇晟</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #00f2fe; --accent: #4facfe; --bg: #0a0f1e; --panel: #162033; --text: #f1f5f9; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        :root { 
+            --primary: #00f2fe; 
+            --accent: #4facfe; 
+            --bg: #050a14; 
+            --panel: #111a2e; 
+            --text: #f1f5f9; 
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'PingFang TC', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
+        /* 標題區 */
         .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 2.2rem; text-shadow: 0 0 15px rgba(0, 242, 254, 0.4); }
-        .header p { color: #94a3b8; margin: 5px 0 0; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 2rem; text-shadow: 0 0 20px rgba(0, 242, 254, 0.5); }
+        .header p { color: #64748b; margin: 5px 0 0; letter-spacing: 1px; }
 
-        .layout-container { display: flex; gap: 20px; max-width: 1250px; width: 100%; align-items: flex-start; }
+        .layout-container { display: flex; gap: 20px; max-width: 1200px; width: 100%; align-items: flex-start; }
 
-        /* 左側 QR 分享欄 */
-        .qr-sidebar { width: 180px; background: var(--panel); padding: 20px; border-radius: 20px; border: 1px solid #2d3a4f; text-align: center; position: sticky; top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        #qrcode { background: white; padding: 12px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .qr-sidebar p { font-size: 0.85rem; color: #cbd5e1; margin: 10px 0 0; line-height: 1.5; }
+        /* 左側側邊欄：QR Code */
+        .qr-sidebar { 
+            width: 180px; background: var(--panel); padding: 20px; border-radius: 24px; 
+            border: 1px solid #1e293b; text-align: center; position: sticky; top: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+        }
+        #qrcode { background: white; padding: 10px; border-radius: 12px; display: inline-block; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .qr-sidebar p { font-size: 0.8rem; color: #94a3b8; margin: 10px 0 0; line-height: 1.5; }
 
-        /* 中央模擬器主體 */
-        .lab-wrapper { flex: 1; background: var(--panel); padding: 30px; border-radius: 28px; display: flex; gap: 30px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); border: 1px solid #2d3a4f; }
+        /* 中央實驗台主體 */
+        .lab-wrapper { 
+            flex: 1; background: var(--panel); padding: 30px; border-radius: 32px; 
+            display: flex; gap: 30px; box-shadow: 0 30px 70px rgba(0,0,0,0.7); 
+            border: 1px solid #1e293b;
+        }
         
+        /* 觀測視窗 */
         .viewer-section { flex: 1.3; }
-        .viewer-container { width: 100%; aspect-ratio: 4/3; border-radius: 16px; overflow: hidden; position: relative; background: #000; border: 4px solid #2d3a4f; }
+        .viewer-container { 
+            width: 100%; aspect-ratio: 4/3; border-radius: 20px; overflow: hidden; 
+            position: relative; background: #000; border: 4px solid #1e293b; 
+        }
         
-        /* 觀測背景圖 */
-        #mainImg { width: 100%; height: 100%; object-fit: cover; transition: filter 0.2s ease; }
+        /* 場景底層：純 CSS 場景 */
+        .scene-bg { width: 100%; height: 100%; position: absolute; top:0; left:0; display: none; }
+        .active-scene { display: flex; align-items: center; justify-content: center; }
 
-        /* 濾鏡層 */
-        .overlay-layer { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        #glareOverlay { background: linear-gradient(to bottom, transparent 30%, rgba(255,255,255,0.7) 85%); opacity: 1; }
-        #layer-stress { mix-blend-mode: color; }
-        #layer-color { mix-blend-mode: hue; }
-        #layer-diff { mix-blend-mode: screen; }
+        /* 場景 1：水面眩光場景 */
+        .bg-glare { background: linear-gradient(180deg, #1e293b 0%, #0c4a6e 60%, #0369a1 100%); }
+        .water-glare { position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent); transition: opacity 0.2s; }
+
+        /* 場景 2：透明零件場景 (SVG 繪製) */
+        .bg-part { background: #0a0f1e; }
+        .transparent-ruler { width: 350px; height: 100px; border: 2px solid rgba(255,255,255,0.2); border-radius: 4px; position: relative; background: rgba(255,255,255,0.05); overflow: hidden; }
+        .ruler-marks { width: 100%; height: 20px; position: absolute; bottom: 0; border-top: 1px solid rgba(255,255,255,0.3); background-image: repeating-linear-gradient(90deg, transparent, transparent 9px, rgba(255,255,255,0.3) 10px); }
+
+        /* 場景 3：夜間城市 */
+        .bg-city { background: radial-gradient(circle at 80% 20%, #fffde7 0%, #fbc02d 4%, #0f172a 20%); }
+
+        /* 核心濾鏡圖層 */
+        .filter-layer { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+        #layer-stress { mix-blend-mode: color-dodge; } /* 應力效果 */
+        #layer-color { mix-blend-mode: hue; } /* 色彩偏移 */
+        #layer-diff { mix-blend-mode: screen; } /* 繞射星芒 */
 
         /* 控制面板 */
         .control-section { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-        .control-group { background: #0a0f1e; padding: 18px; border-radius: 15px; border: 1px solid #2d3a4f; }
-        .control-group h3 { margin: 0 0 12px 0; font-size: 1rem; color: var(--primary); border-left: 4px solid var(--primary); padding-left: 10px; }
+        .control-group { background: #050a14; padding: 18px; border-radius: 18px; border: 1px solid #1e293b; }
+        .control-group h3 { margin: 0 0 12px 0; font-size: 0.95rem; color: var(--primary); border-left: 4px solid var(--primary); padding-left: 10px; }
         
-        select, input[type=range] { width: 100%; background: #162033; color: white; border: 1px solid #334155; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
+        select, input[type=range] { width: 100%; background: #111a2e; color: white; border: 1px solid #2d3a4f; padding: 10px; border-radius: 8px; cursor: pointer; }
         
-        .check-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
-        .check-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; cursor: pointer; color: #cbd5e1; }
+        .check-item { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 0.9rem; cursor: pointer; color: #94a3b8; }
         .check-item input { width: 18px; height: 18px; accent-color: var(--primary); }
 
-        .btn-apply { width: 100%; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #0f172a; border: none; padding: 15px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 1.1rem; transition: all 0.2s; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); }
-        .btn-apply:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 242, 254, 0.5); }
+        .btn-apply { width: 100%; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050a14; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(0, 242, 254, 0.2); transition: 0.2s; }
+        .btn-apply:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(0, 242, 254, 0.4); }
 
-        /* 推薦角度說明區 */
-        .recommend-section { width: 100%; max-width: 1100px; margin-top: 35px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .recommend-card { background: var(--panel); padding: 20px; border-radius: 18px; border-left: 5px solid var(--primary); cursor: pointer; transition: 0.3s; }
-        .recommend-card:hover { background: #1e2a44; transform: scale(1.02); }
+        /* 推薦角度說明卡 */
+        .recommend-section { width: 100%; max-width: 1100px; margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .recommend-card { background: var(--panel); padding: 20px; border-radius: 20px; border-left: 5px solid var(--primary); cursor: pointer; transition: 0.3s; }
+        .recommend-card:hover { background: #1a253d; transform: scale(1.02); }
         .recommend-card h4 { margin: 0; color: var(--primary); font-size: 1.1rem; }
-        .recommend-card p { font-size: 0.9rem; margin: 10px 0 0; color: #94a3b8; line-height: 1.6; }
+        .recommend-card p { font-size: 0.85rem; margin: 10px 0 0; color: #94a3b8; line-height: 1.6; }
 
         @media (max-width: 950px) {
             .layout-container { flex-direction: column; align-items: center; }
@@ -67,34 +97,41 @@
 <body>
 
 <div class="header">
-    <h1>物理眼鏡虛擬實驗室：互動模擬系統</h1>
-    <p>實驗人員：黃孟緯、林宇晟</p>
+    <h1>物理眼鏡虛擬實驗室</h1>
+    <p>光學特性觀測模擬：黃孟緯、林宇晟</p>
 </div>
 
 <div class="layout-container">
     <div class="qr-sidebar">
-        <h3>📱 手機同步操作</h3>
+        <h3>📱 行動端連結</h3>
         <div id="qrcode"></div>
-        <p>掃描 QR Code<br>即可在手機上體驗<br>光學干涉效果</p>
+        <p>掃描 QR Code<br>在手機上進行<br>同步光學觀測</p>
     </div>
 
     <div class="lab-wrapper">
         <div class="viewer-section">
-            <div class="viewer-container">
-                <img id="mainImg" 
-                     src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" 
-                     onerror="handleImageError(this)" 
-                     alt="光學場景">
+            <div class="viewer-container" id="viewerContainer">
+                <div id="scene1" class="scene-bg active-scene bg-glare">
+                    <div id="waterGlare" class="water-glare"></div>
+                </div>
                 
-                <div id="glareOverlay" class="overlay-layer"></div>
-                <div id="layer-stress" class="overlay-layer"></div>
-                <div id="layer-color" class="overlay-layer"></div>
-                <div id="layer-diff" class="overlay-layer"></div>
+                <div id="scene2" class="scene-bg bg-part">
+                    <div class="transparent-ruler">
+                        <div class="ruler-marks"></div>
+                    </div>
+                    <div id="rulerStress" style="position:absolute; width:350px; height:100px; pointer-events:none; opacity:0; mix-blend-mode:color-dodge;"></div>
+                </div>
+
+                <div id="scene3" class="scene-bg bg-city"></div>
+                
+                <div id="layer-stress" class="filter-layer"></div>
+                <div id="layer-color" class="filter-layer"></div>
+                <div id="layer-diff" class="filter-layer"></div>
             </div>
             
-            <div style="margin-top: 20px; background: #0a0f1e; padding: 18px; border-radius: 12px; border: 1px solid #2d3a4f;">
+            <div style="margin-top: 20px; background: #050a14; padding: 20px; border-radius: 16px; border: 1px solid #1e293b;">
                 <label style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px;">
-                    <span>🔄 鏡片旋轉角度 (無段式調校)</span>
+                    <span>🔄 鏡片機械旋轉角度 (無段調校)</span>
                     <span style="color: var(--primary); font-size: 1.2rem;"><span id="angleVal">0</span>°</span>
                 </label>
                 <input type="range" id="angleSlider" min="0" max="180" value="0">
@@ -103,27 +140,27 @@
 
         <div class="control-section">
             <div class="control-group">
-                <h3>🌍 第一步：選擇場景</h3>
+                <h3>🌍 第一步：選擇觀測對象</h3>
                 <select id="sceneSelect">
-                    <option value="glare">場景 1：湖面漫反射 (防眩光測試)</option>
-                    <option value="stress">場景 2：透明科學零件 (應力測試)</option>
-                    <option value="diff">場景 3：夜間點光源 (繞射測試)</option>
+                    <option value="1">對象 A：帶有反光的水面</option>
+                    <option value="2">對象 B：透明光學零件 (透明尺)</option>
+                    <option value="3">對象 C：遠方夜間點光源</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <h3>🔬 第二步：濾鏡零件配置</h3>
+                <h3>🔬 第二步：配置濾鏡組合</h3>
                 <div class="check-list">
-                    <label class="check-item"><input type="checkbox" class="mode-chk" value="A"> A. 偏振減光片 (馬呂斯定律)</label>
+                    <label class="check-item"><input type="checkbox" class="mode-chk" value="A"> A. 偏振減光鏡片 (馬呂斯定律)</label>
                     <label class="check-item"><input type="checkbox" class="mode-chk" value="B"> B. 應力雙折射夾層 (顯像效果)</label>
-                    <label class="check-item"><input type="checkbox" class="mode-chk" value="C"> C. 相位延遲調色盤 (色彩質變)</label>
-                    <label class="check-item"><input type="checkbox" class="mode-chk" value="D"> D. 繞射光柵外掛 (七彩星芒)</label>
+                    <label class="check-item"><input type="checkbox" class="mode-chk" value="C"> C. 相位延遲調色盤 (調色功能)</label>
+                    <label class="check-item"><input type="checkbox" class="mode-chk" value="D"> D. 繞射光柵外掛 (光譜分析)</label>
                 </div>
-                <button class="btn-apply" onclick="applySettings()">確認套用鏡片組合</button>
+                <button class="btn-apply" onclick="applySettings()">確認套用零件組合</button>
             </div>
-
-            <div id="status" style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 10px; border: 1px dashed #2d3a4f; border-radius: 10px;">
-                狀態：等待套用中...
+            
+            <div id="status-text" style="font-size: 0.85rem; color: #64748b; text-align: center; border: 1px dashed #2d3a4f; padding: 12px; border-radius: 12px;">
+                狀態：等待組合配置中...
             </div>
         </div>
     </div>
@@ -131,111 +168,102 @@
 
 <div class="recommend-section">
     <div class="recommend-card" onclick="setAngle(55)">
-        <h4>🎯 推薦：55° (布魯斯特角)</h4>
-        <p><b>物理效果：</b> 水面或玻璃表面的反射眩光會在此角度下被過濾至最低，讓視線能清晰穿透反射層，直達水底。</p>
+        <h4>🎯 推薦：55° (消除反射眩光)</h4>
+        <p><b>科學解釋：</b> 此為布魯斯特角。當偏振方向與反射面成此角度時，水平面的反射雜光會被濾除，讓您直接看穿透明表面下的細節。</p>
     </div>
     <div class="recommend-card" onclick="setAngle(90)">
-        <h4>🎯 推薦：90° (完全滅點)</h4>
-        <p><b>物理效果：</b> 當兩層線性偏振片的主軸成垂直正交時，遵循馬呂斯定律 $I = I_0 \cos^2(90^\circ) = 0$，光線幾乎被完全阻擋。</p>
+        <h4>🎯 推薦：90° (物理全黑滅點)</h4>
+        <p><b>科學解釋：</b> 正交狀態。遵循馬呂斯定律，兩層偏振片主軸垂直時，光強降為 0，適合用來觀察殘餘應力的微弱光芒。</p>
     </div>
     <div class="recommend-card" onclick="setAngle(45)">
-        <h4>🎯 推薦：45° (最強干涉)</h4>
-        <p><b>物理效果：</b> 在此角度下，相位延遲效果最為強烈。透明物件內部的內應力紋路會呈現出最鮮艷奪目的彩虹干涉色。</p>
+        <h4>🎯 推薦：45° (最強應力觀測)</h4>
+        <p><b>科學解釋：</b> 此時透明零件內部的雙折射效應最強，相位延遲干涉最明顯，零件上的「彩虹應力花紋」會最為艷麗。</p>
     </div>
 </div>
 
 <script>
-    // 1. 生成 QR Code 分享網址 (抓取目前的 GitHub Pages 網址)
+    // 1. 初始化 QR Code
     new QRCode(document.getElementById("qrcode"), {
         text: window.location.href,
         width: 140,
-        height: 140,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+        height: 140
     });
 
     const slider = document.getElementById('angleSlider');
     const angleVal = document.getElementById('angleVal');
-    const mainImg = document.getElementById('mainImg');
-    let currentModes = [];
+    let activeModes = [];
 
-    // 2. 更新為最穩定的科學場景圖庫
-    const imageLibrary = {
-        glare: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800",
-        stress: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800", // 透明實驗器材
-        diff: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800"
-    };
-
-    // 圖片載入失敗的補救措施
-    function handleImageError(img) {
-        console.log("圖片載入失敗，啟動備援場景...");
-        img.src = "https://via.placeholder.com/800x600/162033/00f2fe?text=Scene+Loading...";
-    }
-
-    // 3. 場景切換
+    // 2. 場景切換功能
     document.getElementById('sceneSelect').onchange = function() {
-        mainImg.src = imageLibrary[this.value];
+        document.querySelectorAll('.scene-bg').forEach(s => s.classList.remove('active-scene'));
+        document.getElementById('scene' + this.value).classList.add('active-scene');
         render();
     };
 
-    // 4. 滑桿角度即時渲染
+    // 3. 滑桿控制
     slider.oninput = function() {
         angleVal.innerText = this.value;
         render();
     };
 
-    // 5. 確認套用按鈕
     function applySettings() {
         const checks = document.querySelectorAll('.mode-chk');
-        currentModes = Array.from(checks).filter(c => c.checked).map(c => c.value);
-        document.getElementById('status').innerText = `✅ 已成功啟用：${currentModes.length > 0 ? currentModes.join(', ') : '無鏡片'}`;
+        activeModes = Array.from(checks).filter(c => c.checked).map(c => c.value);
+        document.getElementById('status-text').innerText = `✅ 已啟動組合：${activeModes.length > 0 ? activeModes.join(', ') : '無'}`;
         render();
     }
 
-    // 6. 核心物理引擎 (物理現象連動)
+    // 4. 核心渲染物理模擬器
     function render() {
         const angle = parseInt(slider.value);
         const rad = (angle * Math.PI) / 180;
-        const glareLayer = document.getElementById('glareOverlay');
-        const isGlareScene = document.getElementById('sceneSelect').value === 'glare';
+        const currentScene = document.getElementById('sceneSelect').value;
+        const viewer = document.getElementById('viewerContainer');
 
-        // A. 處理偏振減光 (模式 A)
+        // A. 處理馬呂斯定律 (亮度)
         let intensity = 1.0;
-        if (currentModes.includes('A')) {
+        if (activeModes.includes('A')) {
             intensity = Math.pow(Math.cos(rad), 2);
-            if(angle >= 86 && angle <= 94) intensity = 0.05; // 模擬全黑
-            
-            // 防眩光連動：55度時反射光消失
-            if (isGlareScene) {
-                glareLayer.style.opacity = Math.abs(Math.sin((angle - 55) * Math.PI / 180));
-            } else {
-                glareLayer.style.opacity = 0;
+            if(angle >= 86 && angle <= 94) intensity = 0.05; // 滅點
+
+            // 消眩光 (場景 1)
+            if (currentScene === '1') {
+                document.getElementById('waterGlare').style.opacity = Math.abs(Math.sin((angle - 55) * Math.PI / 180));
             }
         } else {
-            glareLayer.style.opacity = isGlareScene ? 1.0 : 0;
+            document.getElementById('waterGlare').style.opacity = 1.0;
         }
-        mainImg.style.filter = `brightness(${intensity * 100}%) contrast(1.1)`;
+        viewer.style.filter = `brightness(${intensity * 100}%) contrast(1.1)`;
 
-        // B. 處理應力彩虹 (模式 B)
-        const layerStress = document.getElementById('layer-stress');
-        if (currentModes.includes('B')) {
-            layerStress.style.opacity = Math.abs(Math.sin(2 * rad)) * intensity;
-            layerStress.style.background = `radial-gradient(circle at 50% 45%, rgba(255,0,80,0.4), rgba(255,255,0,0.4), rgba(0,255,100,0.4), rgba(0,240,255,0.4), rgba(255,0,255,0.4))`;
-        } else { layerStress.style.opacity = 0; }
+        // B. 處理應力彩虹 (場景 2 零件內專屬)
+        const rulerStress = document.getElementById('rulerStress');
+        if (activeModes.includes('B')) {
+            let op = Math.abs(Math.sin(2 * rad));
+            rulerStress.style.opacity = op;
+            rulerStress.style.background = `radial-gradient(circle at 30% 50%, #ff0055, #feff00, #00ff66, #00f2fe, #ff00ff)`;
+            
+            // 全螢幕應力 (場景 1, 3 使用)
+            if (currentScene !== '2') {
+                document.getElementById('layer-stress').style.opacity = op * 0.5;
+                document.getElementById('layer-stress').style.background = `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2), transparent)`;
+            }
+        } else {
+            rulerStress.style.opacity = 0;
+            document.getElementById('layer-stress').style.opacity = 0;
+        }
 
-        // C. 處理色彩偏移 (模式 C)
+        // C. 色彩偏移
         const layerColor = document.getElementById('layer-color');
-        if (currentModes.includes('C')) {
-            layerColor.style.opacity = (currentModes.includes('B') ? 0.35 : 0.55) * intensity;
-            layerColor.style.backgroundColor = `hsl(${(angle * 2.5) % 360}, 85%, 50%)`;
+        if (activeModes.includes('C')) {
+            layerColor.style.opacity = 0.4 * intensity;
+            layerColor.style.backgroundColor = `hsl(${(angle * 2.5) % 360}, 80%, 50%)`;
         } else { layerColor.style.opacity = 0; }
 
-        // D. 處理繞射星芒 (模式 D)
+        // D. 繞射星芒 (場景 3 路燈)
         const layerDiff = document.getElementById('layer-diff');
-        if (currentModes.includes('D')) {
-            layerDiff.style.opacity = 0.85 * intensity;
-            layerDiff.style.background = `repeating-conic-gradient(from ${angle}deg at 80% 22%, transparent 0deg, transparent 15deg, rgba(255,0,0,0.6) 17deg, rgba(0,255,0,0.6) 20deg, rgba(0,0,255,0.6) 23deg, transparent 25deg, transparent 45deg)`;
+        if (activeModes.includes('D')) {
+            layerDiff.style.opacity = 0.8 * intensity;
+            layerDiff.style.background = `repeating-conic-gradient(from ${angle}deg at 80% 20%, transparent 0deg, transparent 15deg, rgba(255,0,0,0.5) 17deg, rgba(0,255,0,0.5) 20deg, rgba(0,0,255,0.5) 23deg, transparent 25deg, transparent 45deg)`;
         } else { layerDiff.style.opacity = 0; }
     }
 
@@ -245,7 +273,6 @@
         render();
     }
 
-    // 啟動時先跑一次渲染
     render();
 </script>
 
